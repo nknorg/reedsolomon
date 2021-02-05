@@ -32,10 +32,16 @@ type Encoder interface {
 	// data shards while this is running.
 	Encode(shards [][]byte) error
 
+	// EncodeBytesArray is a gomobile compatible wrap of Encode.
+	EncodeBytesArray(shards *BytesArray) error
+
 	// Verify returns true if the parity shards contain correct data.
 	// The data is the same format as Encode. No data is modified, so
 	// you are allowed to read from data while this is running.
 	Verify(shards [][]byte) (bool, error)
+
+	// VerifyBytesArray is a gomobile compatible wrap of Verify.
+	VerifyBytesArray(shards *BytesArray) (bool, error)
 
 	// Reconstruct will recreate the missing shards if possible.
 	//
@@ -54,6 +60,9 @@ type Encoder interface {
 	// Use the Verify function to check if data set is ok.
 	Reconstruct(shards [][]byte) error
 
+	// ReconstructBytesArray is a gomobile compatible wrap of Reconstruct.
+	ReconstructBytesArray(shards *BytesArray) error
+
 	// ReconstructData will recreate any missing data shards, if possible.
 	//
 	// Given a list of shards, some of which contain data, fills in the
@@ -71,6 +80,9 @@ type Encoder interface {
 	// calling the Verify function is likely to fail.
 	ReconstructData(shards [][]byte) error
 
+	// ReconstructDataBytesArray is a gomobile compatible wrap of ReconstructData.
+	ReconstructDataBytesArray(shards *BytesArray) error
+
 	// Update parity is use for change a few data shards and update it's parity.
 	// Input 'newDatashards' containing data shards changed.
 	// Input 'shards' containing old data shards (if data shard not changed, it can be nil) and old parity shards.
@@ -78,6 +90,9 @@ type Encoder interface {
 	// Update is very useful if  DataShards much larger than ParityShards and changed data shards is few. It will
 	// faster than Encode and not need read all data shards to encode.
 	Update(shards [][]byte, newDatashards [][]byte) error
+
+	// UpdateBytesArray is a gomobile compatible wrap of Update.
+	UpdateBytesArray(shards, newDatashards *BytesArray) error
 
 	// Split a data slice into the number of shards given to the encoder,
 	// and create empty parity shards.
@@ -93,6 +108,9 @@ type Encoder interface {
 	// should not modify the data of the input slice afterwards.
 	Split(data []byte) ([][]byte, error)
 
+	// SplitBytesArray is a gomobile compatible wrap of Split.
+	SplitBytesArray(data []byte) (*BytesArray, error)
+
 	// Join the shards and write the data segment to dst.
 	//
 	// Only the data shards are considered.
@@ -100,6 +118,10 @@ type Encoder interface {
 	// If there are to few shards given, ErrTooFewShards will be returned.
 	// If the total data size is less than outSize, ErrShortData will be returned.
 	Join(dst io.Writer, shards [][]byte, outSize int) error
+
+	// JoinBytesArray is a gomobile compatible wrap of Join, where len(dst) will
+	// be used as outSize.
+	JoinBytesArray(dst []byte, shards *BytesArray) error
 }
 
 // reedSolomon contains a matrix for a specific
@@ -350,6 +372,11 @@ func New(dataShards, parityShards int, opts ...Option) (Encoder, error) {
 	return &r, err
 }
 
+// NewDefault wraps New with deafult options to be gomobile compatible.
+func NewDefault(dataShards, parityShards int) (Encoder, error) {
+	return New(dataShards, parityShards)
+}
+
 // ErrTooFewShards is returned if too few shards where given to
 // Encode/Verify/Reconstruct/Update. It will also be returned from Reconstruct
 // if there were too few shards to reconstruct the missing data.
@@ -377,6 +404,11 @@ func (r *reedSolomon) Encode(shards [][]byte) error {
 	// Do the coding.
 	r.codeSomeShards(r.parity, shards[0:r.DataShards], output, r.ParityShards, len(shards[0]))
 	return nil
+}
+
+// EncodeBytesArray is a gomobile compatible wrap of Encode.
+func (r *reedSolomon) EncodeBytesArray(shards *BytesArray) error {
+	return r.Encode(shards.elems)
 }
 
 // ErrInvalidInput is returned if invalid input parameter of Update.
@@ -420,6 +452,11 @@ func (r *reedSolomon) Update(shards [][]byte, newDatashards [][]byte) error {
 	// Do the coding.
 	r.updateParityShards(r.parity, shards[0:r.DataShards], newDatashards[0:r.DataShards], output, r.ParityShards, shardSize)
 	return nil
+}
+
+// UpdateBytesArray is a gomobile compatible wrap of Update.
+func (r *reedSolomon) UpdateBytesArray(shards, newDatashards *BytesArray) error {
+	return r.Update(shards.elems, newDatashards.elems)
 }
 
 func (r *reedSolomon) updateParityShards(matrixRows, oldinputs, newinputs, outputs [][]byte, outputCount, byteCount int) {
@@ -490,6 +527,11 @@ func (r *reedSolomon) Verify(shards [][]byte) (bool, error) {
 
 	// Do the checking.
 	return r.checkSomeShards(r.parity, shards[0:r.DataShards], toCheck, r.ParityShards, len(shards[0])), nil
+}
+
+// VerifyBytesArray is a gomobile compatible wrap of Verify.
+func (r *reedSolomon) VerifyBytesArray(shards *BytesArray) (bool, error) {
+	return r.Verify(shards.elems)
 }
 
 // Multiplies a subset of rows from a coding matrix by a full set of
@@ -742,6 +784,11 @@ func (r *reedSolomon) Reconstruct(shards [][]byte) error {
 	return r.reconstruct(shards, false)
 }
 
+// ReconstructBytesArray is a gomobile compatible wrap of Reconstruct.
+func (r *reedSolomon) ReconstructBytesArray(shards *BytesArray) error {
+	return r.Reconstruct(shards.elems)
+}
+
 // ReconstructData will recreate any missing data shards, if possible.
 //
 // Given a list of shards, some of which contain data, fills in the
@@ -759,6 +806,11 @@ func (r *reedSolomon) Reconstruct(shards [][]byte) error {
 // calling the Verify function is likely to fail.
 func (r *reedSolomon) ReconstructData(shards [][]byte) error {
 	return r.reconstruct(shards, true)
+}
+
+// ReconstructDataBytesArray is a gomobile compatible wrap of ReconstructFata.
+func (r *reedSolomon) ReconstructDataBytesArray(shards *BytesArray) error {
+	return r.ReconstructData(shards.elems)
 }
 
 // reconstruct will recreate the missing data shards, and unless
@@ -965,6 +1017,15 @@ func (r *reedSolomon) Split(data []byte) ([][]byte, error) {
 	return dst, nil
 }
 
+// SplitBytesArray is a gomobile compatible wrap of Split.
+func (r *reedSolomon) SplitBytesArray(data []byte) (*BytesArray, error) {
+	b, err := r.Split(data)
+	if err != nil {
+		return nil, err
+	}
+	return &BytesArray{elems: b}, nil
+}
+
 // ErrReconstructRequired is returned if too few data shards are intact and a
 // reconstruction is required before you can successfully join the shards.
 var ErrReconstructRequired = errors.New("reconstruction required as one or more required data shards are nil")
@@ -1015,4 +1076,9 @@ func (r *reedSolomon) Join(dst io.Writer, shards [][]byte, outSize int) error {
 		write -= n
 	}
 	return nil
+}
+
+// JoinBytesArray is a gomobile compatible wrap of Join.
+func (r *reedSolomon) JoinBytesArray(dst []byte, shards *BytesArray) error {
+	return r.Join(bytes.NewBuffer(dst), shards.elems, len(dst))
 }

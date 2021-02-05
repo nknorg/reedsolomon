@@ -1,3 +1,6 @@
+A gomobile compatible fork of
+[klauspost/reedsolomon](https://github.com/nknorg/reedsolomon).
+
 # Reed-Solomon
 [![GoDoc][1]][2] [![Build Status][3]][4]
 
@@ -8,7 +11,7 @@
 
 Reed-Solomon Erasure Coding in Go, with speeds exceeding 1GB/s/cpu core implemented in pure Go.
 
-This is a Go port of the [JavaReedSolomon](https://github.com/Backblaze/JavaReedSolomon) library released by 
+This is a Go port of the [JavaReedSolomon](https://github.com/Backblaze/JavaReedSolomon) library released by
 [Backblaze](http://backblaze.com), with some additional optimizations.
 
 For an introduction on erasure coding, see the post on the [Backblaze blog](https://www.backblaze.com/blog/reed-solomon/).
@@ -51,31 +54,31 @@ Assembly code for ppc64le has been contributed, this boosts performance by about
 
 ## November 18, 2017
 
-Added [WithAutoGoroutines](https://godoc.org/github.com/klauspost/reedsolomon#WithAutoGoroutines) which will attempt 
+Added [WithAutoGoroutines](https://godoc.org/github.com/klauspost/reedsolomon#WithAutoGoroutines) which will attempt
 to calculate the optimal number of goroutines to use based on your expected shard size and detected CPU.
 
 ## October 1, 2017
 
-* [Cauchy Matrix](https://godoc.org/github.com/klauspost/reedsolomon#WithCauchyMatrix) is now an option. 
+* [Cauchy Matrix](https://godoc.org/github.com/klauspost/reedsolomon#WithCauchyMatrix) is now an option.
 Thanks to [templexxx](https://github.com/templexxx) for the basis of this.
 
-* Default maximum number of [goroutines](https://godoc.org/github.com/klauspost/reedsolomon#WithMaxGoroutines) 
+* Default maximum number of [goroutines](https://godoc.org/github.com/klauspost/reedsolomon#WithMaxGoroutines)
 has been increased for better multi-core scaling.
 
-* After several requests the Reconstruct and ReconstructData now slices of zero length but sufficient capacity to 
+* After several requests the Reconstruct and ReconstructData now slices of zero length but sufficient capacity to
 be used instead of allocating new memory.
 
 ## August 26, 2017
 
-*  The [`Encoder()`](https://godoc.org/github.com/klauspost/reedsolomon#Encoder) now contains an `Update` 
+*  The [`Encoder()`](https://godoc.org/github.com/klauspost/reedsolomon#Encoder) now contains an `Update`
 function contributed by [chenzhongtao](https://github.com/chenzhongtao).
 
-* [Frank Wessels](https://github.com/fwessels) kindly contributed ARM 64 bit assembly, 
+* [Frank Wessels](https://github.com/fwessels) kindly contributed ARM 64 bit assembly,
 which gives a huge performance boost on this platform.
 
 ## July 20, 2017
 
-`ReconstructData` added to [`Encoder`](https://godoc.org/github.com/klauspost/reedsolomon#Encoder) interface. 
+`ReconstructData` added to [`Encoder`](https://godoc.org/github.com/klauspost/reedsolomon#Encoder) interface.
 This can cause compatibility issues if you implement your own Encoder. A simple workaround can be added:
 
 ```Go
@@ -84,44 +87,44 @@ func (e *YourEnc) ReconstructData(shards [][]byte) error {
 }
 ```
 
-You can of course also do your own implementation. 
-The [`StreamEncoder`](https://godoc.org/github.com/klauspost/reedsolomon#StreamEncoder) 
-handles this without modifying the interface. 
+You can of course also do your own implementation.
+The [`StreamEncoder`](https://godoc.org/github.com/klauspost/reedsolomon#StreamEncoder)
+handles this without modifying the interface.
 This is a good lesson on why returning interfaces is not a good design.
 
 # Usage
 
-This section assumes you know the basics of Reed-Solomon encoding. 
+This section assumes you know the basics of Reed-Solomon encoding.
 A good start is this [Backblaze blog post](https://www.backblaze.com/blog/reed-solomon/).
 
 This package performs the calculation of the parity sets. The usage is therefore relatively simple.
 
-First of all, you need to choose your distribution of data and parity shards. 
-A 'good' distribution is very subjective, and will depend a lot on your usage scenario. 
-A good starting point is above 5 and below 257 data shards (the maximum supported number), 
+First of all, you need to choose your distribution of data and parity shards.
+A 'good' distribution is very subjective, and will depend a lot on your usage scenario.
+A good starting point is above 5 and below 257 data shards (the maximum supported number),
 and the number of parity shards to be 2 or above, and below the number of data shards.
 
 To create an encoder with 10 data shards (where your data goes) and 3 parity shards (calculated):
 ```Go
     enc, err := reedsolomon.New(10, 3)
 ```
-This encoder will work for all parity sets with this distribution of data and parity shards. 
-The error will only be set if you specify 0 or negative values in any of the parameters, 
+This encoder will work for all parity sets with this distribution of data and parity shards.
+The error will only be set if you specify 0 or negative values in any of the parameters,
 or if you specify more than 256 data shards.
 
-If you will primarily be using it with one shard size it is recommended to use 
+If you will primarily be using it with one shard size it is recommended to use
 [`WithAutoGoroutines(shardSize)`](https://pkg.go.dev/github.com/klauspost/reedsolomon?tab=doc#WithAutoGoroutines)
 as an additional parameter. This will attempt to calculate the optimal number of goroutines to use for the best speed.
-It is not required that all shards are this size. 
+It is not required that all shards are this size.
 
-The you send and receive data  is a simple slice of byte slices; `[][]byte`. 
+The you send and receive data  is a simple slice of byte slices; `[][]byte`.
 In the example above, the top slice must have a length of 13.
 
 ```Go
     data := make([][]byte, 13)
 ```
-You should then fill the 10 first slices with *equally sized* data, 
-and create parity shards that will be populated with parity data. In this case we create the data in memory, 
+You should then fill the 10 first slices with *equally sized* data,
+and create parity shards that will be populated with parity data. In this case we create the data in memory,
 but you could for instance also use [mmap](https://github.com/edsrzf/mmap-go) to map files.
 
 ```Go
@@ -129,8 +132,8 @@ but you could for instance also use [mmap](https://github.com/edsrzf/mmap-go) to
     for i := range input {
       data[i] := make([]byte, 50000)
     }
-    
-    
+
+
   // Fill some data into the data shards
     for i, in := range data[:10] {
       for j:= range in {
@@ -143,17 +146,17 @@ To populate the parity shards, you simply call `Encode()` with your data.
 ```Go
     err = enc.Encode(data)
 ```
-The only cases where you should get an error is, if the data shards aren't of equal size. 
+The only cases where you should get an error is, if the data shards aren't of equal size.
 The last 3 shards now contain parity data. You can verify this by calling `Verify()`:
 
 ```Go
     ok, err = enc.Verify(data)
 ```
 
-The final (and important) part is to be able to reconstruct missing shards. 
-For this to work, you need to know which parts of your data is missing. 
-The encoder *does not know which parts are invalid*, so if data corruption is a likely scenario, 
-you need to implement a hash check for each shard. 
+The final (and important) part is to be able to reconstruct missing shards.
+For this to work, you need to know which parts of your data is missing.
+The encoder *does not know which parts are invalid*, so if data corruption is a likely scenario,
+you need to implement a hash check for each shard.
 
 If a byte has changed in your set, and you don't know which it is, there is no way to reconstruct the data set.
 
@@ -163,7 +166,7 @@ To indicate missing data, you set the shard to nil before calling `Reconstruct()
     // Delete two data shards
     data[3] = nil
     data[7] = nil
-    
+
     // Reconstruct the missing shards
     err := enc.Reconstruct(data)
 ```
@@ -175,7 +178,7 @@ If you are only interested in the data shards (for reading purposes) you can cal
     // Delete two data shards
     data[3] = nil
     data[7] = nil
-    
+
     // Reconstruct just the missing data shards
     err := enc.ReconstructData(data)
 ```
@@ -186,26 +189,26 @@ So to sum up reconstruction:
 * You may only supply data you know is valid.
 * Invalid shards should be set to nil.
 
-For complete examples of an encoder and decoder see the 
+For complete examples of an encoder and decoder see the
 [examples folder](https://github.com/klauspost/reedsolomon/tree/master/examples).
 
 # Splitting/Joining Data
 
-You might have a large slice of data. 
+You might have a large slice of data.
 To help you split this, there are some helper functions that can split and join a single byte slice.
 
 ```Go
    bigfile, _ := ioutil.Readfile("myfile.data")
-   
+
    // Split the file
    split, err := enc.Split(bigfile)
 ```
-This will split the file into the number of data shards set when creating the encoder and create empty parity shards. 
+This will split the file into the number of data shards set when creating the encoder and create empty parity shards.
 
-An important thing to note is that you have to *keep track of the exact input size*. 
+An important thing to note is that you have to *keep track of the exact input size*.
 If the size of the input isn't divisible by the number of data shards, extra zeros will be inserted in the last shard.
 
-To join a data set, use the `Join()` function, which will join the shards and write it to the `io.Writer` you supply: 
+To join a data set, use the `Join()` function, which will join the shards and write it to the `io.Writer` you supply:
 ```Go
    // Join a data set and write it to io.Discard.
    err = enc.Join(io.Discard, data, len(bigfile))
@@ -213,81 +216,81 @@ To join a data set, use the `Join()` function, which will join the shards and wr
 
 # Streaming/Merging
 
-It might seem like a limitation that all data should be in memory, 
-but an important property is that *as long as the number of data/parity shards are the same, 
+It might seem like a limitation that all data should be in memory,
+but an important property is that *as long as the number of data/parity shards are the same,
 you can merge/split data sets*, and they will remain valid as a separate set.
 
 ```Go
     // Split the data set of 50000 elements into two of 25000
     splitA := make([][]byte, 13)
     splitB := make([][]byte, 13)
-    
+
     // Merge into a 100000 element set
     merged := make([][]byte, 13)
-    
+
     for i := range data {
       splitA[i] = data[i][:25000]
       splitB[i] = data[i][25000:]
-      
+
       // Concatenate it to itself
 	  merged[i] = append(make([]byte, 0, len(data[i])*2), data[i]...)
 	  merged[i] = append(merged[i], data[i]...)
     }
-    
+
     // Each part should still verify as ok.
     ok, err := enc.Verify(splitA)
     if ok && err == nil {
         log.Println("splitA ok")
     }
-    
+
     ok, err = enc.Verify(splitB)
     if ok && err == nil {
         log.Println("splitB ok")
     }
-    
+
     ok, err = enc.Verify(merge)
     if ok && err == nil {
         log.Println("merge ok")
     }
 ```
 
-This means that if you have a data set that may not fit into memory, you can split processing into smaller blocks. 
+This means that if you have a data set that may not fit into memory, you can split processing into smaller blocks.
 For the best throughput, don't use too small blocks.
 
-This also means that you can divide big input up into smaller blocks, and do reconstruction on parts of your data. 
+This also means that you can divide big input up into smaller blocks, and do reconstruction on parts of your data.
 This doesn't give the same flexibility of a higher number of data shards, but it will be much more performant.
 
 # Streaming API
 
-There has been added support for a streaming API, to help perform fully streaming operations, 
-which enables you to do the same operations, but on streams. 
-To use the stream API, use [`NewStream`](https://godoc.org/github.com/klauspost/reedsolomon#NewStream) function 
-to create the encoding/decoding interfaces. 
+There has been added support for a streaming API, to help perform fully streaming operations,
+which enables you to do the same operations, but on streams.
+To use the stream API, use [`NewStream`](https://godoc.org/github.com/klauspost/reedsolomon#NewStream) function
+to create the encoding/decoding interfaces.
 
-You can use [`WithConcurrentStreams`](https://godoc.org/github.com/klauspost/reedsolomon#WithConcurrentStreams) 
+You can use [`WithConcurrentStreams`](https://godoc.org/github.com/klauspost/reedsolomon#WithConcurrentStreams)
 to ready an interface that reads/writes concurrently from the streams.
 
-You can specify the size of each operation using 
+You can specify the size of each operation using
 [`WithStreamBlockSize`](https://godoc.org/github.com/klauspost/reedsolomon#WithStreamBlockSize).
 This will set the size of each read/write operation.
 
-Input is delivered as `[]io.Reader`, output as `[]io.Writer`, and functionality corresponds to the in-memory API. 
-Each stream must supply the same amount of data, similar to how each slice must be similar size with the in-memory API. 
-If an error occurs in relation to a stream, 
-a [`StreamReadError`](https://godoc.org/github.com/klauspost/reedsolomon#StreamReadError) 
-or [`StreamWriteError`](https://godoc.org/github.com/klauspost/reedsolomon#StreamWriteError) 
+Input is delivered as `[]io.Reader`, output as `[]io.Writer`, and functionality corresponds to the in-memory API.
+Each stream must supply the same amount of data, similar to how each slice must be similar size with the in-memory API.
+If an error occurs in relation to a stream,
+a [`StreamReadError`](https://godoc.org/github.com/klauspost/reedsolomon#StreamReadError)
+or [`StreamWriteError`](https://godoc.org/github.com/klauspost/reedsolomon#StreamWriteError)
 will help you determine which stream was the offender.
 
 There is no buffering or timeouts/retry specified. If you want to add that, you need to add it to the Reader/Writer.
 
-For complete examples of a streaming encoder and decoder see the 
+For complete examples of a streaming encoder and decoder see the
 [examples folder](https://github.com/klauspost/reedsolomon/tree/master/examples).
 
 # Advanced Options
 
 You can modify internal options which affects how jobs are split between and processed by goroutines.
 
-To create options, use the WithXXX functions. You can supply options to `New`, `NewStream`. 
+To create options, use the WithXXX functions. You can supply options to `New`, `NewStream`.
 If no Options are supplied, default options are used.
 
 Example of how to supply options:
@@ -298,10 +301,10 @@ Example of how to supply options:
 
 
 # Performance
-Performance depends mainly on the number of parity shards. 
+Performance depends mainly on the number of parity shards.
 In rough terms, doubling the number of parity shards will double the encoding time.
 
-Here are the throughput numbers with some different selections of data and parity shards. 
+Here are the throughput numbers with some different selections of data and parity shards.
 For reference each shard is 1MB random data, and 16 CPU cores are used for encoding.
 
 | Data | Parity | Go MB/s | SSSE3 MB/s | AVX2 MB/s |
@@ -313,7 +316,7 @@ For reference each shard is 1MB random data, and 16 CPU cores are used for encod
 
 The throughput numbers here is the size of the encoded data and parity shards.
 
-If `runtime.GOMAXPROCS()` is set to a value higher than 1, 
+If `runtime.GOMAXPROCS()` is set to a value higher than 1,
 the encoder will use multiple goroutines to perform the calculations in `Verify`, `Encode` and `Reconstruct`.
 
 Example of performance scaling on AMD Ryzen 3950X - 16 physical cores, 32 logical cores, AVX 2.
@@ -342,22 +345,22 @@ BenchmarkReconstruct10x4x16M-8       1484.35      5779.53      3.89x
 
 # Performance on AVX512
 
-The performance on AVX512 has been accelerated for Intel CPUs. 
-This gives speedups on a per-core basis typically up to 2x compared to 
+The performance on AVX512 has been accelerated for Intel CPUs.
+This gives speedups on a per-core basis typically up to 2x compared to
 AVX2 as can be seen in the following table:
 
 ```
 [...]
 ```
 
-This speedup has been achieved by computing multiple parity blocks in parallel as opposed to one after the other. 
-In doing so it is possible to minimize the memory bandwidth required for loading all data shards. 
-At the same time the calculations are performed in the 512-bit wide ZMM registers and the surplus of ZMM 
+This speedup has been achieved by computing multiple parity blocks in parallel as opposed to one after the other.
+In doing so it is possible to minimize the memory bandwidth required for loading all data shards.
+At the same time the calculations are performed in the 512-bit wide ZMM registers and the surplus of ZMM
 registers (32 in total) is used to keep more data around (most notably the matrix coefficients).
 
 # Performance on ARM64 NEON
 
-By exploiting NEON instructions the performance for ARM has been accelerated. 
+By exploiting NEON instructions the performance for ARM has been accelerated.
 Below are the performance numbers for a single core on an EC2 m6g.16xlarge (Graviton2) instance (Amazon Linux 2):
 
 ```
@@ -369,7 +372,7 @@ BenchmarkGaloisXor1M-64        10000    100322 ns/op        10452.13 MB/s
 
 # Performance on ppc64le
 
-The performance for ppc64le has been accelerated. 
+The performance for ppc64le has been accelerated.
 This gives roughly a 10x performance improvement on this architecture as can been seen below:
 
 ```
