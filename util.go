@@ -25,6 +25,11 @@ func (ba *BytesArray) Set(i int, b []byte) {
 	ba.elems[i] = b
 }
 
+// Set nil of the BytesArray.
+func (ba *BytesArray) SetNil(i int) {
+	ba.elems[i] = nil
+}
+
 // Append appends an element to the BytesArray and increments its length.
 func (ba *BytesArray) Append(b []byte) {
 	ba.elems = append(ba.elems, b)
