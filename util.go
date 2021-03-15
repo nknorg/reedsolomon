@@ -17,17 +17,17 @@ func (ba *BytesArray) Len() int {
 
 // Get returns an element of the BytesArray.
 func (ba *BytesArray) Get(i int) []byte {
-	return ba.elems[i]
+	cbytes := make([]byte, len(ba.elems[i]))
+	copy(cbytes, ba.elems[i])
+	ba.elems[i] = cbytes
+	return cbytes
 }
 
 // Set sets an element of the BytesArray.
 func (ba *BytesArray) Set(i int, b []byte) {
-	ba.elems[i] = b
-}
-
-// Set nil of the BytesArray.
-func (ba *BytesArray) SetNil(i int) {
-	ba.elems[i] = nil
+	cbytes := make([]byte, len(b))
+	copy(cbytes, b)
+	ba.elems[i] = cbytes
 }
 
 // Append appends an element to the BytesArray and increments its length.
